@@ -1,0 +1,12 @@
+name: deeplabcut
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - jupyter
+  - nb_conda
+  - ffmpeg>=5.0
+  - pip:
+    - deeplabcut

@@ -1,28 +1,27 @@
-
-import numpy as np
-import h5py
 import logging as log
 from concurrent.futures import ThreadPoolExecutor
+
+import h5py
+import numpy as np
+import matplotlib
 from numba import jit
 from scipy.ndimage import gaussian_filter
 
-import matplotlib
 try:
     matplotlib.use('module://mplcairo.base')
     import matplotlib.pyplot as plt
+
     print('Using mplcairo as Matplotlib backend')
 except ModuleNotFoundError:
     matplotlib.use('agg')
     import matplotlib.pyplot as plt
+
     print('Using agg as Matplotlib backend')
-from matplotlib.animation import FFMpegWriter
 import seaborn as sns
+from matplotlib.animation import FFMpegWriter
 from utils.cmap_kindlmann import cmap_kindlmann_extended
 
-
-__all__ = ['create_overview_video',
-           'plot_temporal_overview',
-           'plot_spatial_overview']
+__all__ = ['create_overview_video', 'plot_temporal_overview', 'plot_spatial_overview']
 
 
 @jit(nopython=True, nogil=True)
@@ -62,6 +61,7 @@ def frame_array_from_sigs_rois(sigfn, roifn, width, height):
 
 def discrete_cmap_for_n(N, base_cmap=None):
     import random
+
     base = plt.cm.get_cmap(base_cmap)
     color_list = base(np.linspace(0, 1, N * 2))
     cmap = base.from_list('{}_{}'.format(base.name, N), color_list, N)
@@ -105,10 +105,18 @@ def calculate_rawdata_range(fname):
     return vmin, vmax
 
 
-def create_overview_video(dpmat_fname, regmat_fname, rawmat_fname, movie_fname,
-                          fps: int, metadata={}, mc_brighten_factor=1.2, codec='vp9'):
-    ''' Write an overview video of the generated calcium traces, motion correction and
-    temporal-spatial extracted cell activity. '''
+def create_overview_video(
+    dpmat_fname,
+    regmat_fname,
+    rawmat_fname,
+    movie_fname,
+    fps: int,
+    metadata={},
+    mc_brighten_factor=1.2,
+    codec='vp9',
+):
+    '''Write an overview video of the generated calcium traces, motion correction and
+    temporal-spatial extracted cell activity.'''
 
     # configure plotting defaults
     matplotlib.rcParams['figure.autolayout'] = True
@@ -168,19 +176,15 @@ def create_overview_video(dpmat_fname, regmat_fname, rawmat_fname, movie_fname,
     fig.suptitle('frame: ??????', fontsize=12, ha='right', x=0.98)
 
     # data placeholders
-    spf_raw = ax_raw.imshow(np.zeros((pix_h, pix_w)),
-                            cmap=cmap_kindlmann_extended,
-                            vmin=raw_vmin, vmax=raw_vmax)
+    spf_raw = ax_raw.imshow(
+        np.zeros((pix_h, pix_w)), cmap=cmap_kindlmann_extended, vmin=raw_vmin, vmax=raw_vmax
+    )
     ax_raw.set_title('Raw')
 
-    spf_reg = ax_reg.imshow(np.zeros((pix_h, pix_w)),
-                            cmap=cmap_kindlmann_extended,
-                            vmin=0.0, vmax=1.0)
+    spf_reg = ax_reg.imshow(np.zeros((pix_h, pix_w)), cmap=cmap_kindlmann_extended, vmin=0.0, vmax=1.0)
     ax_reg.set_title('After MC')
 
-    spf_res = ax_res.imshow(np.zeros((pix_h, pix_w)),
-                            cmap=cmap_kindlmann_extended,
-                            vmin=0.0, vmax=1.0)
+    spf_res = ax_res.imshow(np.zeros((pix_h, pix_w)), cmap=cmap_kindlmann_extended, vmin=0.0, vmax=1.0)
     ax_res.set_title('Processed')
 
     # create color mapping for our traces
@@ -196,7 +200,7 @@ def create_overview_video(dpmat_fname, regmat_fname, rawmat_fname, movie_fname,
     for i in range(0, len(sigs_zsc_plotadj[0, :])):
         plot_sigs_vismask[:, i] = np.ma.masked_inside(sigs_zsc[:, i], -1.5, 1.5)
         sigs_zsc_plotadj[:, i] = (sigs_zsc[:, i] * 1.5) + (i * 1.5)
-        p, = ax_trace.plot(np.nan, np.nan, linewidth=1.5)
+        (p,) = ax_trace.plot(np.nan, np.nan, linewidth=1.5)
         p.set_color(cmap_trace_bg[i])
         spf_traces.append(p)
         if i == 0:
@@ -208,7 +212,7 @@ def create_overview_video(dpmat_fname, regmat_fname, rawmat_fname, movie_fname,
     # would otherwise make any other traces with smaller signals less visible. For a quick overview,
     # this display is good enough
     ax_trace.set_ylim(ymin=traces_ymin, ymax=traces_ymax)
-    ax_trace.set_xlim(xmin=trace_range * - 1, xmax=(trace_range + 1))
+    ax_trace.set_xlim(xmin=trace_range * -1, xmax=(trace_range + 1))
     ax_trace_vline = ax_trace.axvline(x=0, linestyle=':', linewidth=1, zorder=100)
     log.info('Trace plot limits calculated: {} to {}'.format(traces_ymax, traces_ymin))
 
@@ -240,11 +244,13 @@ def create_overview_video(dpmat_fname, regmat_fname, rawmat_fname, movie_fname,
             trace_x = np.arange(trace_start, trace_end)
             ax_trace_vline.set_xdata(i)
             for j, spf_trace in enumerate(spf_traces):
-                if np.count_nonzero(plot_sigs_vismask[:, j][i - trace_hl_range:i + trace_hl_range]) >= (trace_hl_range / 1.5):
+                if np.count_nonzero(plot_sigs_vismask[:, j][i - trace_hl_range : i + trace_hl_range]) >= (
+                    trace_hl_range / 1.5
+                ):
                     spf_trace.set_color(cmap_trace_hl[j])
                 else:
                     spf_trace.set_color(cmap_trace_bg[j])
-                spf_trace.set_data(trace_x, sigs_zsc_plotadj[:, j][trace_start:trace_range + i])
+                spf_trace.set_data(trace_x, sigs_zsc_plotadj[:, j][trace_start : trace_range + i])
 
             if i % render_proglog_interval == 0:
                 log.info('Rendered {} of {} frames'.format(i, frames_n))
@@ -253,8 +259,7 @@ def create_overview_video(dpmat_fname, regmat_fname, rawmat_fname, movie_fname,
     log.info('Video created successfully ({} frames @ {}fps)'.format(frames_n, fps))
 
 
-def plot_temporal_overview(dpmat_fname, fig_fname,
-                           subject_id=None, test_id=None, test_date=None):
+def plot_temporal_overview(dpmat_fname, fig_fname, subject_id=None, test_id=None, test_date=None):
     sns.set()
     sns.set_style('white')
     plt.style.use('seaborn-notebook')
@@ -287,8 +292,9 @@ def plot_temporal_overview(dpmat_fname, fig_fname,
     fig.savefig(fig_fname)
 
 
-def plot_spatial_overview(dpmat_fname, fig_fname, with_mc=True,
-                          subject_id=None, test_id=None, test_date=None):
+def plot_spatial_overview(
+    dpmat_fname, fig_fname, with_mc=True, subject_id=None, test_id=None, test_date=None
+):
     sns.set()
     sns.set_style('white')
     plt.style.use('seaborn-notebook')
@@ -336,9 +342,7 @@ def plot_spatial_overview(dpmat_fname, fig_fname, with_mc=True,
 
     x, y = np.unravel_index(seedsfn.T.astype(np.int), (pix_w, pix_h))
     contours_n = len(x)
-    ax_ctr.imshow(imax_mc.T,
-                  cmap=cmap_kindlmann_extended,
-                  vmin=0.0, vmax=0.8)
+    ax_ctr.imshow(imax_mc.T, cmap=cmap_kindlmann_extended, vmin=0.0, vmax=0.8)
 
     contour_threshold = 0.8
     for i in range(contours_n):
@@ -346,17 +350,10 @@ def plot_spatial_overview(dpmat_fname, fig_fname, with_mc=True,
         a = gaussian_filter(a, 3, mode='wrap')
 
         lvl = np.amax(a) * contour_threshold
-        ax_ctr.contour(np.flipud(np.rot90(a)),
-                       levels=[lvl],
-                       colors='lightsteelblue',
-                       linewidths=1.2)
+        ax_ctr.contour(np.flipud(np.rot90(a)), levels=[lvl], colors='lightsteelblue', linewidths=1.2)
 
     for i in range(contours_n):
-        ax_ctr.text(x[i],
-                    y[i],
-                    str(i),
-                    fontsize=10,
-                    color='w')
+        ax_ctr.text(x[i], y[i], str(i), fontsize=10, color='w')
     ax_ctr.set_title('Contours')
 
     # motion correction shifts

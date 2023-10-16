@@ -18,8 +18,8 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
 import re
+import sys
 
 
 def console_supports_color():
@@ -67,8 +67,8 @@ def print_task(*arg):
     '''
     print('->', *arg)
     sys.stdout.flush()
-    
-    
+
+
 def print_info(*arg):
     '''
     Prints an information message and ensures that it shows up on

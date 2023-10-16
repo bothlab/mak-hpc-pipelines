@@ -1,0 +1,22 @@
+name: min1pipe-wrap
+channels:
+- numba
+- conda-forge
+- defaults
+dependencies:
+- python=3.8
+- natsort
+- numpy
+- numba
+- toml
+- pycairo
+- ffmpeg
+- h5py
+- libvpx
+- pip
+- pip:
+  - opencv-python-headless
+  - matplotlib
+  - seaborn
+  - mplcairo
+  - scipy

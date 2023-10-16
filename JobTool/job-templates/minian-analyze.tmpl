@@ -1,0 +1,69 @@
+#!/bin/bash
+#
+########## Begin Slurm header ##########
+#
+# Request number of nodes and CPU cores per node for job
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=24
+#SBATCH --partition=single
+#SBATCH --export=NONE
+#SBATCH --mem=320gb
+#
+# Estimated wallclock time for job
+{% if WRITE_VIDEO %}#SBATCH --time=26:00:00{% else %}#SBATCH --time=20:00:00{% endif %}
+#
+# Reserve node for the job exclusively
+#SBATCH --exclusive
+#
+########### End Slurm header ##########
+
+# Determine our log file name
+logfile_basename="$SLURM_JOB_NAME.log"
+if [ -z "$SLURM_JOB_NAME" ]
+then
+    logfile_basename="tmp.log"
+fi
+set -e
+
+# Go to submit directory
+mkdir -p {{ SDS_ROOT }}/HPC/Logs/minian
+cd {{ SDS_ROOT }}/HPC/Logs/minian
+
+# Redirect log output, override any old log
+mkdir -p {{ RESULTS_DIR }}
+exec > "{{ RESULTS_DIR }}/$logfile_basename" 2>&1
+ln -srf "{{ RESULTS_DIR }}/$logfile_basename"
+
+# Print some interesting job information
+printf "Log for $SLURM_JOB_NAME at `date`\n\n"
+echo "Submit Directory:                  $SLURM_SUBMIT_DIR"
+echo "Working Directory:                 $PWD"
+echo "Node name:                         $SLURMD_NODENAME"
+echo "Job id:                            $SLURM_JOB_ID"
+echo "Job name:                          $SLURM_JOB_NAME"
+echo "Number of nodes allocated for job: $SLURM_JOB_NUM_NODES"
+echo "Number of requested tasks for job: $SLURM_NTASKS"
+printf "\n\n"
+
+# Enter Minian Conda environment
+if [ -z "$JOB_NO_SLURM" ]
+then
+    source $(ws_find conda)/conda/etc/profile.d/conda.sh
+else
+    source /opt/conda/etc/profile.d/conda.sh
+fi
+conda activate minian
+
+if [ -z "$JOB_NO_SLURM" ]
+then
+    export MINIAN_NWORKERS=12
+else
+    # our local machine can handle a lot of threads, but doesn't have a ton of memory,
+    # so we need to limit the Dask job count a bit.
+    export MINIAN_NWORKERS=16
+fi
+
+# Run pipeline
+exec {{ SDS_ROOT }}/HPC/Pipelines/minian-edl-batch.py \
+        -d {{ RESULTS_DIR }} {% if WRITE_VIDEO %}--write-video {% endif %} \
+        {{ RAW_VIDEOS_DIR }}

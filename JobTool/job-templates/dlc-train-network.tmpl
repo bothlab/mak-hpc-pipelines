@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+########## Begin Slurm header ##########
+#
+# Request number of nodes and CPU cores per node for job
+#SBATCH --nodes=1
+#SBATCH --partition=gpu-single
+#SBATCH --gres=gpu:1
+#
+# Memory requirement
+#SBATCH --mem=32000mb
+#
+# Estimated wallclock time for job
+#SBATCH --time=34:00:00
+#
+# Reserve node for the job exclusively
+#SBATCH --exclusive
+#
+########### End Slurm header ##########
+
+# Determine our log file name
+logfile_basename="$SLURM_JOB_NAME.log"
+if [ -z "$SLURM_JOB_NAME" ]
+then
+    logfile_basename="tmp.log"
+fi
+set -e
+
+# Go to submit directory
+mkdir -p {{ SDS_ROOT }}/HPC/Logs/dlc-train
+cd {{ SDS_ROOT }}/HPC/Logs/dlc-train
+
+# Redirect log output, override any old log
+exec > "$logfile_basename" 2>&1
+
+# Print some interesting job information
+printf "Log for $SLURM_JOB_NAME at `date`\n\n"
+echo "Submit Directory:                  $SLURM_SUBMIT_DIR"
+echo "Working Directory:                 $PWD"
+echo "Node name:                         $SLURMD_NODENAME"
+echo "Job id:                            $SLURM_JOB_ID"
+echo "Job name:                          $SLURM_JOB_NAME"
+echo "Number of requested tasks for job: $SLURM_NTASKS"
+printf "\n\n"
+
+# Enter DeepLabCut Conda environment
+if [ -z "$JOB_NO_SLURM" ]
+then
+    source $(ws_find conda)/conda/etc/profile.d/conda.sh
+    # Load CUDA & related modules
+    module load devel/cuda/11.6
+    module load lib/cudnn/8.5.0-cuda-11.6
+else
+    source /opt/conda/etc/profile.d/conda.sh
+fi
+conda activate deeplabcut
+
+# Start training
+exec {{ SDS_ROOT }}/HPC/Pipelines/dlc-train-network.py \
+        {{ CONFIG_FNAME }}
