@@ -22,21 +22,25 @@ In brief, to get this working on the bwHPC Helix cluster (adjust for your partic
 
 1. Log into the entry node
 2. Clone this repository into a directory next to your data, e.g. if this directory is called `HPC`, the layout may look like this:
-```
- ├── Data
- ├── DLCProjects
- └── HPC
-```
-This directory may mie on the HPC's data storage system.
+   ```
+   ├── Data
+   ├── DLCProjects
+   └── HPC
+   ```
+   This directory may lie on the HPC's data storage system.
+
 3. Set up the workspaces initially by running `<makhpcpath>/Setup/setup-all.sh youremail@institution.com`, replacing the E-Mail with a valid institute email so you are notified when the workspace is about to expire
    (this repository also contains a script to extend it).
+
 4. Update your `.bashrc` for convenience:
    Run `nano ~/.bashrc` and scroll to the bottom of the text file.
    Then add the line:
    `source $( ws_find conda )/conda/etc/profile.d/conda.sh`
    to it and save the file.
    Then log out and log in to the cluster again.
+
 5. Run `./<makhpcpath>/Tools/clone-all.sh`
+
 6. Run:
    ```bash
    cd ~
