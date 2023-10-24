@@ -452,14 +452,7 @@ def run(options):
     else:
         log.info('No artifacts found, taking data as-is.')
 
-    #print_section('Modified SparseSIM Deconvolution')
-    #dc_n_workers = n_workers // 2
-    #if dc_n_workers < 2:
-    #    dc_n_workers = 2
-    #varr = deconvolve_ssim(varr, framerate=framerate_fps, max_workers=dc_n_workers, **param_ssim)
-    #log.info('Done.')
-
-    # save the data
+    # save the raw data
     log.info('Saving intermediate video data')
     chk, _ = get_optimal_chk(varr, dtype=float)
     varr = save_minian(
@@ -507,14 +500,8 @@ def run(options):
     )
     log.info('Done.')
 
-    print_section('Saving deconvolved & motion corrected data')
-    video_basename = 'decon-mc.mkv'
-    if 'collection_id' in edl_metadata:
-        video_basename = '{}_{}'.format(edl_metadata['collection_id'][0:6], video_basename)
-    write_array_as_video(Y_bg, os.path.join(results_dir, video_basename))
     del Y_bg
     del varr_ref_bg
-    log.info('Cached intermediate data space usage: {}'.format(format_filesize(get_tree_size(intpath))))
 
     print_section('CNMF Initialization')
     log.info('Compute max projection')
