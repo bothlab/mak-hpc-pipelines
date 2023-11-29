@@ -1,15 +1,14 @@
-
 import os
-import stat
 import sys
+import stat
 import shutil
-import subprocess
 import platform
-from rich import print
-from rich.table import Table
-from rich import box
-from gconst import JOB_SCHEDULE_DIR
+import subprocess
+
+from rich import box, print
 from utils import random_string
+from gconst import JOB_SCHEDULE_DIR
+from rich.table import Table
 
 
 class TaskScheduler:
@@ -46,7 +45,7 @@ class TaskScheduler:
         self._dry_run = v
 
     def _schedule_job_slurm(self, batch_fname, name):
-        ''' Submit a new SLURM job '''
+        '''Submit a new SLURM job'''
 
         os.makedirs(JOB_SCHEDULE_DIR, exist_ok=True)
         # actually submit the job
@@ -90,9 +89,8 @@ class TaskScheduler:
                 self._jobs_table.add_row(name, '[red]✗ Failed')
             live.update(table)
 
-
     def schedule_job(self, batch_fname, name):
-        ''' Plan running a new job. If we don't have SLURM, the job may be executed immediately. '''
+        '''Plan running a new job. If we don't have SLURM, the job may be executed immediately.'''
 
         # make sure job is executable
         st = os.stat(batch_fname)
@@ -114,7 +112,7 @@ class TaskScheduler:
             self._jobs_table.add_row(name, '[yellow]⏏ Skipped')
 
     def print_jobs_summary(self):
-        ''' Print the SLURM job queue or jobs table for the current user '''
+        '''Print the SLURM job queue or jobs table for the current user'''
         print(self._jobs_table)
         self._reset_jobs_table = Table(box=box.MINIMAL)
 

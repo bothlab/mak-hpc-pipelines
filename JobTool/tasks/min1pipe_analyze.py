@@ -9,49 +9,51 @@ data collection.
 
 import os
 import sys
-import edlio
 from glob import glob
-from gconst import SDS_ROOT
-from utils import JobTemplateLoader
 from argparse import ArgumentParser
+
+import edlio
+from utils import JobTemplateLoader
+from gconst import SDS_ROOT
 
 '''
 Create MIN1PIPE fluorescence activity analysis jobs.
 '''
 
 
-
-def schedule_min1pipe_job_for(scheduler, tmpl_loader, collection_id,
-                              video_fnames, write_video, results_dir):
-    job_fname = tmpl_loader.create_job_file('min1pipe-analyze.tmpl',
-                                            'MIN1PIPE_{}'.format(collection_id),
-                                            WRITE_VIDEO=write_video,
-                                            RESULTS_DIR=results_dir,
-                                            RAW_VIDEO_FILES=video_fnames)
+def schedule_min1pipe_job_for(scheduler, tmpl_loader, collection_id, video_fnames, write_video, results_dir):
+    job_fname = tmpl_loader.create_job_file(
+        'min1pipe-analyze.tmpl',
+        'MIN1PIPE_{}'.format(collection_id),
+        WRITE_VIDEO=write_video,
+        RESULTS_DIR=results_dir,
+        RAW_VIDEO_FILES=video_fnames,
+    )
 
     # submit the new job
     scheduler.schedule_job(job_fname, name=collection_id)
 
 
 def setup_arguments(parser):
-    ''' Configure arguments for this task module '''
+    '''Configure arguments for this task module'''
 
-    parser.add_argument('--apattern', default='*', type=str,
-                        help='Animal glob pattern.')
-    parser.add_argument('--dpattern', default='*', type=str,
-                        help='date glob pattern.')
-    parser.add_argument('--epattern', default='*', type=str,
-                        help='Experiment glob pattern.')
-    parser.add_argument('--video-dset', default='miniscope', type=str,
-                        help='Video dataset name (multiple options can be given as semicolon-separated list).')
-    parser.add_argument('--out-dset', default='fluo-mp-analysis', type=str,
-                        help='Name of the output dataset.')
-    parser.add_argument('--no-overview-video', action='store_true',
-                        help='Disable overview video generation.')
+    parser.add_argument('--apattern', default='*', type=str, help='Animal glob pattern.')
+    parser.add_argument('--dpattern', default='*', type=str, help='date glob pattern.')
+    parser.add_argument('--epattern', default='*', type=str, help='Experiment glob pattern.')
+    parser.add_argument(
+        '--video-dset',
+        default='miniscope',
+        type=str,
+        help='Video dataset name (multiple options can be given as semicolon-separated list).',
+    )
+    parser.add_argument(
+        '--out-dset', default='fluo-mp-analysis', type=str, help='Name of the output dataset.'
+    )
+    parser.add_argument('--no-overview-video', action='store_true', help='Disable overview video generation.')
 
 
 def run(scheduler, data_location, options):
-    ''' Check which data we should analyze '''
+    '''Check which data we should analyze'''
 
     if not data_location:
         print('You need to specify a data location!')
@@ -89,13 +91,19 @@ def run(scheduler, data_location, options):
             if dset:
                 break
         if not dset:
-            print('SKIP {}: No dataset with name(s): {}!'.format(collection_id, ', or '.join(video_dset_names)))
+            print(
+                'SKIP {}: No dataset with name(s): {}!'.format(collection_id, ', or '.join(video_dset_names))
+            )
             scheduler.mark_skipped_job(collection_id, 'no miniscope dset')
             continue
 
         if len(dset.aux_data) != 1:
-            raise Exception(('Unexpected amount of auxiliary data found (expected only '
-                             'one tsync dataset, got {} sets').format(len(dset.aux_data)))
+            raise Exception(
+                (
+                    'Unexpected amount of auxiliary data found (expected only '
+                    'one tsync dataset, got {} sets'
+                ).format(len(dset.aux_data))
+            )
 
         valid_videos = []
         for data_fname, adata_fname in zip(dset.data.part_paths(), dset.aux_data[0].part_paths()):
@@ -114,9 +122,11 @@ def run(scheduler, data_location, options):
             scheduler.mark_skipped_job(collection_id)
             continue
 
-        schedule_min1pipe_job_for(scheduler,
-                                  tmpl_loader,
-                                  collection_id,
-                                  video_fnames=valid_videos,
-                                  write_video=not options.no_overview_video,
-                                  results_dir=results_dir)
+        schedule_min1pipe_job_for(
+            scheduler,
+            tmpl_loader,
+            collection_id,
+            video_fnames=valid_videos,
+            write_video=not options.no_overview_video,
+            results_dir=results_dir,
+        )

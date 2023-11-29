@@ -2,16 +2,16 @@
 
 import os
 import sys
-from gconst import SDS_ROOT
-from utils import JobTemplateLoader
 from argparse import ArgumentParser
 
+from utils import JobTemplateLoader
+from gconst import SDS_ROOT
 
 DLC_CONFIG_ROOT = os.path.join(SDS_ROOT, 'DLCProjects')
 
 
 def run(scheduler, data_location, options):
-    ''' Create job for DLC network training '''
+    '''Create job for DLC network training'''
 
     if not data_location:
         print('You need to specify a DLC project name!')
@@ -25,10 +25,9 @@ def run(scheduler, data_location, options):
         sys.exit(4)
 
     tmpl_loader = JobTemplateLoader()
-    job_fname = tmpl_loader.create_job_file('dlc-train-network.tmpl',
-                                            'DLCTraining_{}'.format(project_name),
-                                            CONFIG_FNAME=project_config_fname)
+    job_fname = tmpl_loader.create_job_file(
+        'dlc-train-network.tmpl', 'DLCTraining_{}'.format(project_name), CONFIG_FNAME=project_config_fname
+    )
 
     # submit the new job
-    scheduler.schedule_job(job_fname,
-                           name=project_name)
+    scheduler.schedule_job(job_fname, name=project_name)

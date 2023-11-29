@@ -203,15 +203,15 @@ def write_array_as_video(
     return fname
 
 
-def deconvolve_ssim(varr, framerate, n_iterations=100, max_workers=8, **kwargs):
+def deconvolve_ssim(varr, framerate, n_iterations=100, max_workers=8, sys_tmpdir=None, **kwargs):
     import gc
 
     from deconvolve_ssim.deblur import deblur_sparse_hessian
 
     gc.collect()
     log.info('Running SSIM deconvolution with a max worker count of %s', max_workers)
-    _, varr_decon = deblur_sparse_hessian(
-        varr, n_iterations, max_workers=max_workers, slice_size=10 * framerate, **kwargs
+    varr_decon = deblur_sparse_hessian(
+        varr, n_iterations, max_workers=max_workers, slice_size=8 * framerate, sys_tmpdir=sys_tmpdir, **kwargs
     )
     return xr.DataArray(
         varr_decon,
@@ -315,7 +315,7 @@ def run(options):
 
     # Pre-processing Parameters
     param_load_videos = {
-        "pattern": r"^msslice.*\.mkv$",
+        "pattern": r"^(msslice|mscope).*\.mkv$",
         "dtype": np.uint8,
         "downsample": dict(frame=1, height=1, width=1),
         "downsample_strategy": "subset",
@@ -413,14 +413,15 @@ def run(options):
     # Set up Dask cluster
     #
     print_section('Cluster Setup')
-    cluster_memory_limit = "98GB"
+    cluster_memory_limit = "96GB"
     dask.config.set({'interface': 'lo'})
     cluster = LocalCluster(
         n_workers=n_workers,
         memory_limit=cluster_memory_limit,
-        resources={"MEM": 1},
-        threads_per_worker=1,
+        threads_per_worker=4,
         dashboard_address=":8787",
+        processes=True,
+        resources={"MEM": 1},
     )
     annt_plugin = TaskAnnotation()
     cluster.scheduler.add_plugin(annt_plugin)
@@ -452,8 +453,18 @@ def run(options):
     else:
         log.info('No artifacts found, taking data as-is.')
 
-    # save the raw data
-    log.info('Saving intermediate video data')
+    if optn.use_decon:
+        print_section('Modified SparseSIM Deconvolution')
+        varr = deconvolve_ssim(
+            varr, framerate=framerate_fps, max_workers=n_workers, sys_tmpdir=sys_tmpdir, **param_ssim
+        )
+        log.info('Done.')
+
+        # save the deconvolved raw data
+        log.info('Saving intermediate deconvolved video data')
+    else:
+        log.info('Saving intermediate data & references')
+
     chk, _ = get_optimal_chk(varr, dtype=float)
     varr = save_minian(
         varr.astype(np.uint8).chunk({"frame": chk["frame"], "height": -1, "width": -1}).rename("varr"),
@@ -500,6 +511,13 @@ def run(options):
     )
     log.info('Done.')
 
+    if optn.use_decon:
+        print_section('Saving deconvolved & motion corrected data')
+        video_basename = 'decon-mc.mkv'
+        if 'collection_id' in edl_metadata:
+            video_basename = '{}_{}'.format(edl_metadata['collection_id'][0:6], video_basename)
+        write_array_as_video(Y_bg, os.path.join(results_dir, video_basename))
+        log.info('Cached intermediate data space usage: {}'.format(format_filesize(get_tree_size(intpath))))
     del Y_bg
     del varr_ref_bg
 
@@ -678,6 +696,12 @@ if __name__ == '__main__':
         action='store_true',
         dest='write_video',
         help='Whether to render a video overview of the analyzed data.',
+    )
+    parser.add_argument(
+        '--deconvolve',
+        action='store_true',
+        dest='use_decon',
+        help='Deconvolve the data before processing it (not needed in most cases).',
     )
     parser.add_argument(
         'videos_dir', action='store', nargs='?', help='Directory with the Miniscope video files to analyze.'

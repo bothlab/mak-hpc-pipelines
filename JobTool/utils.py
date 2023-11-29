@@ -1,21 +1,22 @@
-
 import os
-import jinja2
 import shlex
-from gconst import SDS_ROOT, SLURM_TEMPLATE_ROOT, JOB_TEMP_DIR
+
+import jinja2
+from gconst import SDS_ROOT, JOB_TEMP_DIR, SLURM_TEMPLATE_ROOT
 
 
 class JobTemplateLoader:
     def __init__(self):
         tmpl_loader = jinja2.FileSystemLoader(searchpath=SLURM_TEMPLATE_ROOT)
-        self._tmpl_env = jinja2.Environment(loader=tmpl_loader,
-                                            autoescape=jinja2.select_autoescape(
-                                                                disabled_extensions=('txt', 'moab', 'slurm', 'tmpl'),
-                                                                default_for_string=True, default=True)
-                                            )
+        self._tmpl_env = jinja2.Environment(
+            loader=tmpl_loader,
+            autoescape=jinja2.select_autoescape(
+                disabled_extensions=('txt', 'moab', 'slurm', 'tmpl'), default_for_string=True, default=True
+            ),
+        )
 
     def create_job_file(self, template_name, filename, **kwargs):
-        ''' Create a new job from a job template '''
+        '''Create a new job from a job template'''
 
         # shell-escape all string parameters
         tmpl_params = kwargs.copy()

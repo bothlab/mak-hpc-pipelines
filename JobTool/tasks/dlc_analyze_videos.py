@@ -2,10 +2,11 @@
 
 import os
 import sys
-import edlio
 from glob import glob
-from gconst import SDS_ROOT
+
+import edlio
 from utils import JobTemplateLoader
+from gconst import SDS_ROOT
 
 '''
 This script is intended to be run the on bwForCluster MLS&WISO HPC
@@ -14,34 +15,35 @@ to create jobs for automated animal tracking from prerecorded videos.
 
 
 def schedule_dlc_job_for(scheduler, tmpl_loader, dlc_config_fname, collection_id, video_fnames, results_dir):
-    job_fname = tmpl_loader.create_job_file('dlc-analyze-videos.tmpl',
-                                            'DLCTracking_{}'.format(collection_id),
-                                            CONFIG_FNAME=dlc_config_fname,
-                                            RESULTS_DIR=results_dir,
-                                            VIDEO_FILES=video_fnames)
+    job_fname = tmpl_loader.create_job_file(
+        'dlc-analyze-videos.tmpl',
+        'DLCTracking_{}'.format(collection_id),
+        CONFIG_FNAME=dlc_config_fname,
+        RESULTS_DIR=results_dir,
+        VIDEO_FILES=video_fnames,
+    )
     # submit the new job
     scheduler.schedule_job(job_fname, name=collection_id)
 
 
 def setup_arguments(parser):
-    ''' Configure arguments for this task module '''
+    '''Configure arguments for this task module'''
 
-    parser.add_argument('--dlc-project', type=str,
-                        help='DeepLabCut project name.')
-    parser.add_argument('--apattern', default='*', type=str,
-                        help='Animal glob pattern.')
-    parser.add_argument('--dpattern', default='*', type=str,
-                        help='Date glob pattern.')
-    parser.add_argument('--epattern', default='*', type=str,
-                        help='Experiment glob pattern.')
-    parser.add_argument('--video-dset', default='tis-camera', type=str,
-                        help='Video dataset name (multiple options can be given as semicolon-separated list).')
-    parser.add_argument('--out-dset', default='dlc-tracking', type=str,
-                        help='Name of the output dataset.')
+    parser.add_argument('--dlc-project', type=str, help='DeepLabCut project name.')
+    parser.add_argument('--apattern', default='*', type=str, help='Animal glob pattern.')
+    parser.add_argument('--dpattern', default='*', type=str, help='Date glob pattern.')
+    parser.add_argument('--epattern', default='*', type=str, help='Experiment glob pattern.')
+    parser.add_argument(
+        '--video-dset',
+        default='tis-camera',
+        type=str,
+        help='Video dataset name (multiple options can be given as semicolon-separated list).',
+    )
+    parser.add_argument('--out-dset', default='dlc-tracking', type=str, help='Name of the output dataset.')
 
 
 def run(scheduler, data_location, options):
-    ''' Check which data we should analyze '''
+    '''Check which data we should analyze'''
 
     if not data_location:
         print('You need to spcify a data location!')
@@ -82,7 +84,9 @@ def run(scheduler, data_location, options):
             if dset:
                 break
         if not dset:
-            print('SKIP {}: No dataset with name(s): {}!'.format(collection_id, ', or '.join(video_dset_names)))
+            print(
+                'SKIP {}: No dataset with name(s): {}!'.format(collection_id, ', or '.join(video_dset_names))
+            )
             scheduler.mark_skipped_job(collection_id, 'no recognized video dset')
             continue
 
@@ -96,9 +100,11 @@ def run(scheduler, data_location, options):
         for data_fname, adata_fname in zip(dset.data.part_paths(), aux_data.part_paths()):
             # we only want to include videos which have a certain number of frames
             if os.stat(adata_fname).st_size < 500:
-                print('DATA-SKIP: Video "{}" in "{}" was too short.'.format(
-                        data_fname.replace(dset.path, '').strip('/'),
-                        collection_id))
+                print(
+                    'DATA-SKIP: Video "{}" in "{}" was too short.'.format(
+                        data_fname.replace(dset.path, '').strip('/'), collection_id
+                    )
+                )
                 scheduler.mark_skipped_job(collection_id, 'video too short')
                 continue
             valid_videos.append(data_fname)
@@ -115,9 +121,6 @@ def run(scheduler, data_location, options):
             scheduler.mark_skipped_job(collection_id)
             continue
 
-        schedule_dlc_job_for(scheduler,
-                             tmpl_loader,
-                             dlc_config_fname,
-                             collection_id,
-                             valid_videos,
-                             results_dir)
+        schedule_dlc_job_for(
+            scheduler, tmpl_loader, dlc_config_fname, collection_id, valid_videos, results_dir
+        )

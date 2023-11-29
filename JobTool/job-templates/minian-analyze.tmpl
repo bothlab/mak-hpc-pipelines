@@ -4,13 +4,13 @@
 #
 # Request number of nodes and CPU cores per node for job
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=24
+#SBATCH --ntasks-per-node=32
 #SBATCH --partition=single
 #SBATCH --export=NONE
-#SBATCH --mem=320gb
+#SBATCH --mem={% if WITH_DECON %}256GB{% else %}512GB{% endif %}
 #
 # Estimated wallclock time for job
-{% if WRITE_VIDEO %}#SBATCH --time=22:00:00{% else %}#SBATCH --time=16:00:00{% endif %}
+#SBATCH --time={% if WITH_DECON %}32:00:00{% elif WRITE_VIDEO %}20:00:00{% else %}18:00:00{% endif %}
 #
 # Reserve node for the job exclusively
 #SBATCH --exclusive
@@ -64,6 +64,8 @@ else
 fi
 
 # Run pipeline
-exec {{ SDS_ROOT }}/HPC/Pipelines/minian-edl-batch.py \
-        -d {{ RESULTS_DIR }} {% if WRITE_VIDEO %}--write-video {% endif %} \
+exec python3 -u {{ SDS_ROOT }}/HPC/Pipelines/minian-edl-batch.py \
+        -d {{ RESULTS_DIR }} \
+        {% if WRITE_VIDEO %}--write-video{% endif %} \
+        {% if WITH_DECON %}--deconvolve{% endif %} \
         {{ RAW_VIDEOS_DIR }}

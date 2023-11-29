@@ -7,7 +7,6 @@
 import sys
 import importlib
 
-
 '''
 Determine which runner is responsible for which job type.
 '''

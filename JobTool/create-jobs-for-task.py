@@ -5,10 +5,10 @@ import os
 import sys
 import shutil
 from argparse import ArgumentParser
+
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'edlio'))
 from tasks import TASK_MODS, load_task_module
 from taskscheduler import TaskScheduler
-
 
 '''
 This script is intended to be run the on bwForCluster MLS&WISO HPC
@@ -28,18 +28,19 @@ def main():
     parser = ArgumentParser(description='Create & schedule jobs on bwForCluster')
     subparsers = parser.add_subparsers(dest='sp_name', title='subcommands')
 
-    parser.add_argument('--show-task-modules', action='store_true',
-                        help='List all known task modules.')
+    parser.add_argument('--show-task-modules', action='store_true', help='List all known task modules.')
 
     task_run_fns = {}
     for tm in TASK_MODS.keys():
         sp = subparsers.add_parser(tm)
-        sp.add_argument('--dry', action='store_true',
-                        help='Simulate a run without scheduling any jobs.')
-        sp.add_argument('--local', action='store_true',
-                        help='Run jobs locally without SLURM job scheduler.')
-        sp.add_argument('-d', '--data-location', type=str,
-                        help='Location of the data (relative to SDS root), or task-specific data name.')
+        sp.add_argument('--dry', action='store_true', help='Simulate a run without scheduling any jobs.')
+        sp.add_argument('--local', action='store_true', help='Run jobs locally without SLURM job scheduler.')
+        sp.add_argument(
+            '-d',
+            '--data-location',
+            type=str,
+            help='Location of the data (relative to SDS root), or task-specific data name.',
+        )
 
         setup_fn, run_fn = load_task_module(tm)
         task_run_fns[tm] = run_fn
