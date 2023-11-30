@@ -462,15 +462,13 @@ def run(options):
 
         # save the deconvolved raw data
         log.info('Saving intermediate deconvolved video data')
-    else:
-        log.info('Saving intermediate data & references')
+        chk, _ = get_optimal_chk(varr, dtype=float)
+        varr = save_minian(
+            varr.astype(np.uint8).chunk({"frame": chk["frame"], "height": -1, "width": -1}).rename("varr"),
+            intpath,
+            overwrite=True,
+        )
 
-    chk, _ = get_optimal_chk(varr, dtype=float)
-    varr = save_minian(
-        varr.astype(np.uint8).chunk({"frame": chk["frame"], "height": -1, "width": -1}).rename("varr"),
-        intpath,
-        overwrite=True,
-    )
     varr_ref = varr.sel(subset)
     varr_ref_bg = save_minian(varr_ref.rename("varr_ref_bg"), dpath=intpath, overwrite=True)
     log.info('Cached intermediate data space usage: {}'.format(format_filesize(get_tree_size(intpath))))
