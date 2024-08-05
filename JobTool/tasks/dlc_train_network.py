@@ -5,9 +5,9 @@ import sys
 from argparse import ArgumentParser
 
 from utils import JobTemplateLoader
-from gconst import SDS_ROOT
+from gconst import Globals
 
-DLC_CONFIG_ROOT = os.path.join(SDS_ROOT, 'DLCProjects')
+DLC_CONFIG_ROOT = os.path.join(Globals.SDS_ROOT, 'DLCProjects')
 
 
 def run(scheduler, data_location, options):

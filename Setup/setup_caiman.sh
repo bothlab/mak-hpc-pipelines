@@ -6,10 +6,11 @@ set -e
 #
 
 BASEDIR=$(dirname "$0")
-WS=$( ws_find conda )
+source "$BASEDIR/common"
+WS=$( ws_find mamba )
 
 echo "==== Creating CaImAn Environment ===="
-source $WS/conda/etc/profile.d/conda.sh
+source $WS/mamba/etc/profile.d/conda.sh
 set -x
 
 module load devel/cuda/11.6
@@ -29,4 +30,4 @@ rm -rf ~/caiman_data
 ./caimanmanager.py install
 
 conda clean -y --all
-du -sh $WS/conda
+du -sh $WS/

@@ -16,6 +16,7 @@ TASK_MODS = {
     'min1pipe-analyze': 'tasks.min1pipe_analyze',
     'caiman-analyze': 'tasks.caiman_analyze',
     'minian-analyze': 'tasks.minian_analyze',
+    'cascade-analyze': 'tasks.cascade_analyze',
 }
 
 

@@ -263,7 +263,7 @@ def run(options):
         print_error('No destination for analyzed data set.')
         sys.exit(1)
     results_dir = options.dest_dir
-    write_overview_video = optn.write_video
+    write_overview_video = options.write_video
 
     print_header(
         'Minian Analysis: {}'.format(os.path.dirname(options.videos_dir).replace('/mnt/sds-hd/', '', 1))
@@ -453,7 +453,7 @@ def run(options):
     else:
         log.info('No artifacts found, taking data as-is.')
 
-    if optn.use_decon:
+    if options.use_decon:
         print_section('Modified SparseSIM Deconvolution')
         varr = deconvolve_ssim(
             varr, framerate=framerate_fps, max_workers=n_workers, sys_tmpdir=sys_tmpdir, **param_ssim
@@ -509,9 +509,13 @@ def run(options):
     )
     log.info('Done.')
 
-    if optn.use_decon:
-        print_section('Saving deconvolved & motion corrected data')
-        video_basename = 'decon-mc.mkv'
+    if options.write_prep_video:
+        if options.use_decon:
+            print_section('Exporting deconvolved & motion corrected video')
+            video_basename = 'prep-decon-mc.mkv'
+        else:
+            print_section('Exporting motion corrected video after initial processing')
+            video_basename = 'prep-mc.mkv'
         if 'collection_id' in edl_metadata:
             video_basename = '{}_{}'.format(edl_metadata['collection_id'][0:6], video_basename)
         write_array_as_video(Y_bg, os.path.join(results_dir, video_basename))
@@ -700,6 +704,12 @@ if __name__ == '__main__':
         action='store_true',
         dest='use_decon',
         help='Deconvolve the data before processing it (not needed in most cases).',
+    )
+    parser.add_argument(
+        '--write-preproc-video',
+        action='store_true',
+        dest='write_prep_video',
+        help='Export a video with only preprocessing steps applied.',
     )
     parser.add_argument(
         'videos_dir', action='store', nargs='?', help='Directory with the Miniscope video files to analyze.'

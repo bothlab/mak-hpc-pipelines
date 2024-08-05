@@ -2,13 +2,13 @@
 
 import os
 import sys
-import shutil
 import argparse
 import subprocess
 from glob import glob
 from pathlib import Path
 
-import tensorflow as tf
+import torch
+import deeplabcut as dlc
 from utils.messages import (
     print_info,
     print_task,
@@ -17,9 +17,6 @@ from utils.messages import (
     print_header,
     print_section,
 )
-
-os.environ["DLClight"] = "True"
-import deeplabcut as dlc
 
 
 def run(options):
@@ -38,12 +35,13 @@ def run(options):
         print_info('Video: {}'.format(vf.replace('/mnt/sds-hd/', '', 1)))
     print()
 
-    print_info('TensorFlow Version: {}'.format(tf.__version__))
-    print_info('DeepLabCut Version: {}'.format('dlc-core alpha'))
-    # print_info('DeepLabCut Version: {}'.format(dlc.version.__version__))
+    print_info(f'PyTorch version: {torch.__version__}')
+    if torch.cuda.is_available():
+        print_info(f'CUDA version: {torch.version.cuda}')
+    if torch.backends.mps.is_available():
+        print_info(f'ROCm version: {torch.version.hip}')
+    print_info(f'DeepLabCut version: {dlc.__version__}')
     sys.stdout.flush()
-    if shutil.which('nvcc'):
-        subprocess.check_call(['nvcc', '--version'])
 
     print_section('Analyzing Videos')
     dlc.analyze_videos(config_fname, video_fnames, destfolder=dest_dir)

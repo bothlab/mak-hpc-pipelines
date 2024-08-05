@@ -11,3 +11,4 @@ set -x
 
 git clone --depth=1 https://github.com/ximion/minian.git
 git clone --depth=1 https://github.com/flatironinstitute/CaImAn.git caiman_setup/CaImAn
+git clone --depth 1 https://github.com/HelmchenLabSoftware/Cascade

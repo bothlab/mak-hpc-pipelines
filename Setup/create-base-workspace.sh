@@ -1,9 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 #
-# Create a new conda base workspace
+# Create a new Mambaforge base workspace
 #
+
+BASEDIR=$(dirname "$0")
+source "$BASEDIR/common"
 
 echo "Using email: $1"
 USER_MAIL=$1
@@ -16,20 +19,20 @@ fi
 # clean the environment
 echo "Cleaning up..."
 conda deactivate || true
-ws_release conda || true
+ws_release mamba || true
 echo "==== Creating workspace ===="
 set -x
 
-ws_allocate -r 7 --mailaddress $USER_MAIL conda 30
-WS=$( ws_find conda )
+ws_allocate -r 7 --mailaddress $USER_MAIL mamba 30
+WS=$( ws_find mamba )
 cd $WS
 
 wget "https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh" -O mambaforge.sh
-bash mambaforge.sh -b -p $WS/conda
+bash mambaforge.sh -b -p $WS/mamba
 rm mambaforge.sh
 
 set +x
-source $WS/conda/etc/profile.d/conda.sh
+source $WS/mamba/etc/profile.d/conda.sh
 set -x
 
 conda activate
@@ -47,4 +50,4 @@ pip install git+https://github.com/bothlab/edlio.git
 mamba update -y --all
 
 mamba clean -y --all
-du -sh $WS/conda
+du -sh $WS

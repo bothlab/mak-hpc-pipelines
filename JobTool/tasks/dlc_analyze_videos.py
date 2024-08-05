@@ -6,7 +6,7 @@ from glob import glob
 
 import edlio
 from utils import JobTemplateLoader
-from gconst import SDS_ROOT
+from gconst import Globals
 
 '''
 This script is intended to be run the on bwForCluster MLS&WISO HPC
@@ -52,13 +52,15 @@ def run(scheduler, data_location, options):
         print('DLC project name was empty - did you specify `--dlc-project`?')
         sys.exit(1)
 
-    edl_root = os.path.join(SDS_ROOT, data_location)
+    edl_root = os.path.join(Globals.SDS_ROOT, data_location)
+    path_glob_pattern = os.path.join(edl_root, options.apattern, options.dpattern, options.epattern)
+    print('Looking for: {}'.format(path_glob_pattern))
     # fetch all EDL directories that match the given parameters
-    edl_dirs = sorted(glob(os.path.join(edl_root, options.apattern, options.dpattern, options.epattern)))
+    edl_dirs = sorted(glob(path_glob_pattern))
 
     video_dset_names = [s.strip() for s in options.video_dset.split(';')]
     output_dset_name = options.out_dset
-    dlc_config_fname = os.path.join(SDS_ROOT, 'DLCProjects', options.dlc_project, 'config.yaml')
+    dlc_config_fname = os.path.join(Globals.SDS_ROOT, 'DLCProjects', options.dlc_project, 'config.yaml')
 
     tmpl_loader = JobTemplateLoader()
 

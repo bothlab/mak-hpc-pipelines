@@ -2,7 +2,7 @@
 set -e
 
 #
-# Extend time limit on conda base workspace
+# Extend time limit on Mamba base workspace
 #
 
 echo "Using email: $1"
@@ -16,15 +16,15 @@ fi
 echo "==== Extending workspace time limit ===="
 set -x
 
-ws_allocate -x conda 30 --mailaddress $USER_MAIL
-WS=$( ws_find conda )
+ws_allocate -x mamba 30 --mailaddress $USER_MAIL
+WS=$( ws_find mamba )
 cd $WS
 set +x
-source $WS/conda/etc/profile.d/conda.sh
+source $WS/mamba/etc/profile.d/conda.sh
 set -x
 conda activate
 
 conda update -y --all
 
 conda clean -y --all
-du -sh $WS/conda
+du -sh $WS/

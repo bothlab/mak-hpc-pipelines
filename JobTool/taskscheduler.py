@@ -54,6 +54,7 @@ class TaskScheduler:
         self._jobs_table.add_row(name, '[[purple]⏲ Submitted')
 
     def _execute_job_immediately(self, batch_fname, name):
+        import getpass
         from rich.live import Live
         from rich.table import Table
 
@@ -62,10 +63,15 @@ class TaskScheduler:
         with Live(table, refresh_per_second=4) as live:
             live.update(table)
 
-            tmpdir = '/tmp/scratch/{}'.format(random_string(4))
+            tmpdir = '/tmp/scratch-{}/{}'.format(getpass.getuser(), random_string(4))
+
+            local_compat_script = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), '..', 'Setup', 'common'
+            )
 
             envp = os.environ.copy()
             envp['JOB_NO_SLURM'] = 'true'
+            envp['JOB_LOCAL_COMPAT_SCRIPT'] = local_compat_script
             envp['SLURM_JOB_NAME'] = name
             envp['SLURM_SUBMIT_DIR'] = JOB_SCHEDULE_DIR
             envp['SLURMD_NODENAME'] = platform.node()

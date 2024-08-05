@@ -9,3 +9,4 @@ cd $(dirname "$0")
 #./setup_caiman.sh
 #./setup_min1pipe-wrap.sh
 ./setup_minian.sh
+./setup_cascade.sh

@@ -55,7 +55,11 @@ echo "Number of requested tasks for job: $SLURM_NTASKS"
 printf "\n\n"
 
 # Enter MIN1PIPE wrapper Conda environment
-source $(ws_find conda)/conda/etc/profile.d/conda.sh
+if [ -n "$JOB_NO_SLURM" ]
+then
+    source "$JOB_LOCAL_COMPAT_SCRIPT"
+fi
+source $(ws_find mamba)/mamba/etc/profile.d/conda.sh
 conda activate min1pipe-wrap
 
 # Load CUDA
@@ -65,6 +69,6 @@ module load devel/cuda/11.2
 module load math/matlab/R2021a
 
 # Run pipeline
-exec {{ SDS_ROOT }}/HPC/Pipelines/min1pipe-wrap.py \
+exec {{ PIPELINES_ROOT }}/min1pipe-wrap.py \
         -d {{ RESULTS_DIR }} {% if WRITE_VIDEO %}--write-video {% endif %} \
         {{ RAW_VIDEO_FILES|join(' ') }}

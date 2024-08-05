@@ -2,7 +2,7 @@ import os
 import shlex
 
 import jinja2
-from gconst import SDS_ROOT, JOB_TEMP_DIR, SLURM_TEMPLATE_ROOT
+from gconst import Globals, PIPELINES_ROOT, JOB_TEMP_DIR, SLURM_TEMPLATE_ROOT
 
 
 class JobTemplateLoader:
@@ -38,7 +38,7 @@ class JobTemplateLoader:
 
         # render template
         tmpl = self._tmpl_env.get_template(template_name)
-        result = tmpl.render(SDS_ROOT=shlex.quote(SDS_ROOT), **tmpl_params)
+        result = tmpl.render(SDS_ROOT=shlex.quote(Globals.SDS_ROOT), PIPELINES_ROOT=PIPELINES_ROOT, **tmpl_params)
 
         # save job script
         os.makedirs(JOB_TEMP_DIR, exist_ok=True)

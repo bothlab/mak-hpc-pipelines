@@ -2,12 +2,9 @@
 
 import os
 import sys
-import subprocess
 
-# os.environ['DLClight'] = 'True'
-# import deeplabcut as dlc
+import torch
 import deeplabcut as dlc
-import tensorflow as tf
 from utils.messages import (
     print_info,
     print_task,
@@ -22,21 +19,36 @@ if len(sys.argv) < 2:
     sys.exit(1)
 config_fname = sys.argv[1]
 
+NET_TYPE = 'hrnet_w32'
+
 print_header('Training DLC network for: {}'.format(config_fname.replace('/mnt/sds-hd/', '', 1)))
 
-print_info('TensorFlow Version: {}'.format(tf.__version__))
-print_info('DeepLabCut Version: {}'.format('dlc-core alpha'))
-# print_info('DeepLabCut Version: {}'.format(dlc.__version__))
+print_info(f'PyTorch version: {torch.__version__}')
+if torch.cuda.is_available():
+    print_info(f'CUDA version: {torch.version.cuda}')
+if torch.backends.mps.is_available():
+    print_info(f'ROCm version: {torch.version.hip}')
+print_info(f'DeepLabCut version: {dlc.__version__}')
 sys.stdout.flush()
-subprocess.check_call(['nvcc', '--version'])
 
 print_section('Creating Training Dataset')
-dlc.create_training_dataset(config_fname, Shuffles=[1])
+dlc.create_training_dataset(config_fname, net_type=NET_TYPE)
 
 print_section('Training Network')
-dlc.train_network(config_fname, shuffle=1, saveiters=5000, displayiters=50, maxiters=500000)
+dlc.train_network(
+    config_fname,
+    shuffle=1,
+    trainingsetindex=0,
+    max_snapshots_to_keep=5,
+    autotune=False,
+    displayiters=50,
+    saveiters=15000,
+    maxiters=30000,
+    allow_growth=True,
+    batch_size=4,
+)
 
 print_section('Evaluating Network')
-dlc.evaluate_network(config_fname)
+dlc.evaluate_network(config_fname, Shuffles=[1], plotting=True)
 
 print_info('Done.')

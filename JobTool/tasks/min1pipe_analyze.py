@@ -14,7 +14,7 @@ from argparse import ArgumentParser
 
 import edlio
 from utils import JobTemplateLoader
-from gconst import SDS_ROOT
+from gconst import Globals
 
 '''
 Create MIN1PIPE fluorescence activity analysis jobs.
@@ -59,7 +59,7 @@ def run(scheduler, data_location, options):
         print('You need to specify a data location!')
         sys.exit(1)
 
-    edl_root = os.path.join(SDS_ROOT, data_location)
+    edl_root = os.path.join(Globals.SDS_ROOT, data_location)
     video_dset_names = [s.strip() for s in options.video_dset.split(';')]
     output_dset_name = options.out_dset
 

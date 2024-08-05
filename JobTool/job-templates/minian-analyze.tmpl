@@ -12,9 +12,6 @@
 # Estimated wallclock time for job
 #SBATCH --time={% if WITH_DECON %}32:00:00{% elif WRITE_VIDEO %}20:00:00{% else %}18:00:00{% endif %}
 #
-# Reserve node for the job exclusively
-#SBATCH --exclusive
-#
 ########### End Slurm header ##########
 
 # Determine our log file name
@@ -46,12 +43,12 @@ echo "Number of requested tasks for job: $SLURM_NTASKS"
 printf "\n\n"
 
 # Enter Minian Conda environment
-if [ -z "$JOB_NO_SLURM" ]
+if [ -n "$JOB_NO_SLURM" ]
 then
-    source $(ws_find conda)/conda/etc/profile.d/conda.sh
-else
-    source /opt/conda/etc/profile.d/conda.sh
+    source "$JOB_LOCAL_COMPAT_SCRIPT"
 fi
+source $(ws_find mamba)/mamba/etc/profile.d/conda.sh
+
 conda activate minian
 
 if [ -z "$JOB_NO_SLURM" ]
@@ -64,8 +61,8 @@ else
 fi
 
 # Run pipeline
-exec python3 -u {{ SDS_ROOT }}/HPC/Pipelines/minian-edl-batch.py \
+exec python3 -u {{ PIPELINES_ROOT }}/minian-edl-batch.py \
         -d {{ RESULTS_DIR }} \
-        {% if WRITE_VIDEO %}--write-video{% endif %} \
+        {% if WRITE_VIDEO %}--write-video{% endif %} {% if WRITE_PREP_VIDEO %}--write-preproc-video{% endif %} \
         {% if WITH_DECON %}--deconvolve{% endif %} \
         {{ RAW_VIDEOS_DIR }}

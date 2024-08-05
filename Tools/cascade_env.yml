@@ -1,0 +1,21 @@
+name: cascade
+channels:
+ - conda-forge
+ - bioconda
+ - defaults
+dependencies:
+ - python=3.8
+ - pip
+ - tensorflow-gpu==2.4.1
+ - keras
+ - h5py
+ - numpy>=1.20
+ - scipy>=1.8
+ - matplotlib
+ - seaborn
+ - ruamel.yaml
+ - zarr
+ - xarray
+ - dask
+ - pip:
+   - edlio

@@ -4,14 +4,15 @@
 #
 # Request number of nodes and CPU cores per node for job
 #SBATCH --nodes=1
+#SBATCH --ntasks-per-node=64
 #SBATCH --partition=single
 #SBATCH --gres=gpu:1
 #
 # Memory requirement
-#SBATCH --mem=230gb
+#SBATCH --mem=48gb
 #
 # Estimated wallclock time for job
-#SBATCH --time=4:00:00
+#SBATCH --time=24:00:00
 #
 ########### End Slurm header ##########
 
@@ -23,15 +24,14 @@ then
 fi
 set -e
 
-# Make & go to submit directory
-mkdir -p {{ SDS_ROOT }}/HPC/Logs/dlc-track
-cd {{ SDS_ROOT }}/HPC/Logs/dlc-track
+# Go to submit directory
+mkdir -p {{ SDS_ROOT }}/HPC/Logs/cascade
+cd {{ SDS_ROOT }}/HPC/Logs/cascade
 
 # Redirect log output, override any old log
-RESULTS_DIR={{ RESULTS_DIR }}
-mkdir -p "$RESULTS_DIR"
-exec > "$RESULTS_DIR/$logfile_basename" 2>&1
-ln -srf "$RESULTS_DIR/$logfile_basename"
+mkdir -p {{ RESULTS_DIR }}
+exec > "{{ RESULTS_DIR }}/$logfile_basename" 2>&1
+ln -srf "{{ RESULTS_DIR }}/$logfile_basename"
 
 # Print some interesting job information
 printf "Log for $SLURM_JOB_NAME at `date`\n\n"
@@ -41,21 +41,23 @@ echo "Node name:                         $SLURMD_NODENAME"
 echo "Job id:                            $SLURM_JOB_ID"
 echo "Job name:                          $SLURM_JOB_NAME"
 echo "Number of nodes allocated for job: $SLURM_JOB_NUM_NODES"
+echo "Number of requested tasks for job: $SLURM_NTASKS"
 printf "\n\n"
 
+# Enter Minian Conda environment
 if [ -n "$JOB_NO_SLURM" ]
 then
     source "$JOB_LOCAL_COMPAT_SCRIPT"
 else
-    # Load CUDA & related modules
+    # Load CUDA
     module load lib/cudnn/9.1.0-cuda-12.2
 fi
 source $(ws_find mamba)/mamba/etc/profile.d/conda.sh
-# Enter DeepLabCut Conda environment
-conda activate deeplabcut
+
+conda activate cascade
 
 # Run pipeline
-exec {{ PIPELINES_ROOT }}/dlc-analyze-videos.py \
-        -c {{ CONFIG_FNAME }} \
+exec python3 -u {{ PIPELINES_ROOT }}/cascade-batch.py \
         -d {{ RESULTS_DIR }} \
-        {{ VIDEO_FILES|join(' ') }}
+        {% if MODEL_NAME %}--model-name {{MODEL_NAME}}{% endif %} \
+        {{ MINIAN_DIR }}

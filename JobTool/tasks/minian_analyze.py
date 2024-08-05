@@ -14,7 +14,7 @@ from argparse import ArgumentParser
 
 import edlio
 from utils import JobTemplateLoader
-from gconst import SDS_ROOT
+from gconst import Globals
 
 '''
 Create Minian fluorescence activity analysis jobs.
@@ -22,12 +22,20 @@ Create Minian fluorescence activity analysis jobs.
 
 
 def schedule_minian_job_for(
-    scheduler, tmpl_loader, collection_id, video_dir, write_video, with_deconvolution, results_dir
+    scheduler,
+    tmpl_loader,
+    collection_id,
+    video_dir,
+    write_video,
+    write_prep_video,
+    with_deconvolution,
+    results_dir,
 ):
     job_fname = tmpl_loader.create_job_file(
         'minian-analyze.tmpl',
         'Minian_{}'.format(collection_id),
         WRITE_VIDEO=write_video,
+        WRITE_PREP_VIDEO=write_prep_video,
         WITH_DECON=with_deconvolution,
         RESULTS_DIR=results_dir,
         RAW_VIDEOS_DIR=video_dir,
@@ -49,12 +57,19 @@ def setup_arguments(parser):
         type=str,
         help='Video dataset name (multiple options can be given as semicolon-separated list).',
     )
-    parser.add_argument('--out-dset', default='minian-analysis', type=str, help='Name of the output dataset.')
+    parser.add_argument(
+        '--out-dset', default='caimg-analysis/minian', type=str, help='Name of the output dataset.'
+    )
     parser.add_argument('--no-overview-video', action='store_true', help='Disable overview video generation.')
     parser.add_argument(
         '--with-decon',
         action='store_true',
         help='Deconvolve raw image data before processing it further (usually not needed).',
+    )
+    parser.add_argument(
+        '--with-prep-vid',
+        action='store_true',
+        help='Also export a video with only preprocessing transformations applied.',
     )
 
 
@@ -65,7 +80,7 @@ def run(scheduler, data_location, options):
         print('You need to specify a data location!')
         sys.exit(1)
 
-    edl_root = os.path.join(SDS_ROOT, data_location)
+    edl_root = os.path.join(Globals.SDS_ROOT, data_location)
     video_dset_names = [s.strip() for s in options.video_dset.split(';')]
     output_dset_name = options.out_dset
 
@@ -138,6 +153,7 @@ def run(scheduler, data_location, options):
             collection_id,
             video_dir=dset.path,
             write_video=not options.no_overview_video,
+            write_prep_video=options.with_prep_vid,
             with_deconvolution=options.with_decon,
             results_dir=results_dir,
         )

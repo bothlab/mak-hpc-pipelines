@@ -1,0 +1,59 @@
+#!/bin/bash
+
+#
+# This code exists to allow the HPC code to run locally just like it would
+# run on the HPC cluster.
+#
+
+# Check if ws_find already exists as a function or binary
+if type ws_find &> /dev/null; then
+    # If ws_find exists, do nothing and return
+    return 0
+else
+    echo "We are not running on the HPC cluster system."
+
+    _fake_hpc_env_fname="$HOME/_scratch/ws/always-fake-hpc-env"
+    if [ -f "$_fake_hpc_env_fname" ]; then
+        answer="y"
+    else
+        read -p "Do you want to fake a HPC environment to continue? If yes, this choice will be saved. (y/n): " answer
+    fi
+
+    # Check the user's response
+    case $answer in
+        [Yy]* )
+            ;;
+        [Nn]* )
+            # Exit the entire script if the user disagrees
+            echo "Exiting script."
+            exit 1
+            ;;
+        * )
+            # Handle invalid input
+            echo "Invalid response. Exiting script."
+            exit 1
+            ;;
+    esac
+
+    mkdir -p "$HOME/_scratch/ws"
+    touch $_fake_hpc_env_fname
+    export LOCAL_NO_HPC="y"
+
+    # Define workspace functions for the local system
+    function ws_release {
+        rm -r "$HOME/_scratch/ws/$1"
+    }
+
+    function ws_allocate {
+        mkdir -p "$HOME/_scratch/ws/$5"
+    }
+
+    function ws_find {
+        echo "$HOME/_scratch/ws/$1"
+    }
+
+    function module {
+        echo "WARNING: Not loading any module, we are not on the HPC and do not have access to the module system."
+        echo "(make sure requirements are installed locally)"
+    }
+fi
